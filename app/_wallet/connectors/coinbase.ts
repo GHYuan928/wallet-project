@@ -73,7 +73,7 @@ const onChainChanged = (callback: (chainId: string, p: any) => void) => {
   console.log('onChainChanged 2')
 
   cw.on("chainChanged", (hex: string) => {
-      console.log('onChainChanged 3')
+      console.log('onChainChanged 3',hex)
     provider = new ethers.BrowserProvider(cw);
     callback(parseInt(hex, 16).toString(), provider);
   });

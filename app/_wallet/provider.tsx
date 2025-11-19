@@ -76,6 +76,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children, chains
     activeWallet.onAccountsChanged?.(accountChange);
 
     const chainChange = (chainId: string, provider: any) => {
+      console.log('chainChange',chainId)
       setState((prev) => ({ ...prev, chainID: chainId , provider}));
       refreshAllBalances();
     }
