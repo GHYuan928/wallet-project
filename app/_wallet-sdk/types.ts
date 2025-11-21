@@ -18,11 +18,13 @@ export interface WalletState {
   address: string|null;
   chainID: string|null;
   walletId: string|null;
+  balance: string;
   isConnecting: boolean;
   isConnected: boolean;
   chains: Chain[];
   error: Error|null;
   provider: any;
+  signer: any;
   accounts: string[]
 }
 export interface WalletContextValue extends WalletState{
@@ -32,6 +34,7 @@ export interface WalletContextValue extends WalletState{
   changeAccountByUser: (address: string)=>Promise<void>
   openModal: ()=>void;
   closeModal: ()=>void;
+  getBalance: ()=>Promise<{balance: string,formatBalance: string}>
 }  
 
 export type WalletProviderProps = {
@@ -44,9 +47,9 @@ export interface Wallet {
   id: string;
   name: string;
   icon: string;
-  connect: ()=>Promise<{provider:any, chainID: string, address: string, accounts:string[]}>
+  connect: ()=>Promise<{provider:any, signer: any, chainID: string, address: string, accounts:string[]}>
   disconnect: () => Promise<void>
-  switchChain:  (chainId: string) => Promise<{provider: any,chainID: string}>
+  switchChain:  (chainId: string) => Promise<{provider: any, chainID: string}>
   addEventListener: ()=>void
   removeEventListener: ()=>void
   description?: string;

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import {useWallet} from '../provider'
 import {ethers, formatEther} from 'ethers'
+import {shortenEthAddress} from '../utils'
 interface ConnectButtonProps {
     label?: string
     showBalance?: boolean
@@ -8,7 +9,7 @@ interface ConnectButtonProps {
     className?: string
 }
 const ConnectButton = ({label="连接钱包",showBalance, size="lg", className}:ConnectButtonProps) => {
-  const { isConnected, openModal , chains, chainID, switchChain, provider, address, accounts, disconnect, changeAccountByUser} = useWallet();
+  const { isConnected, openModal , chains, chainID, switchChain, provider, address, accounts, disconnect, changeAccountByUser, balance} = useWallet();
 
   const sizeClass = {
         sm: 'px-2 py-1 text-sm',
@@ -20,20 +21,14 @@ const ConnectButton = ({label="连接钱包",showBalance, size="lg", className}:
   },[chains, chainID])
   const [showChainDropdown, setShowChainDropdown] =useState(false)
   const [showAccountDropdown, setShowAccountDropdown] =useState(false)
-  const [balance, setBalance] = useState('')
-  useEffect(()=>{
-    const getBalance = async ()=>{
-      let b='';
-      if(!provider || !currentChain || !address|| !isConnected){
-        b= `0.00 ${currentChain?.crrency.symbol}`
-      }else{
-        const bala = await provider.getBalance(address)
-        b = formatEther(bala) + currentChain!.crrency.symbol
-      }
-      isConnected &&  setBalance(b)
+  const newBalance = useMemo(()=>{
+    if(!currentChain){
+        return '0'
     }
-    getBalance()
-  },[currentChain, provider, address, isConnected])
+    return Number(formatEther(balance)).toFixed(6) + currentChain!.crrency.symbol
+
+  },[balance, currentChain])
+
   if (!isConnected) {
       return (
           <div onClick={openModal} className='flex justify-center items-center bg-[#d4382c] w-64 h-12 rounded-md text-amber-50'>
@@ -48,7 +43,10 @@ const ConnectButton = ({label="连接钱包",showBalance, size="lg", className}:
       {
         currentChain? <div className="relative">
                     <button
-                        onClick={() => setShowChainDropdown(!showChainDropdown)}
+                        onClick={() => {
+                            setShowChainDropdown(!showChainDropdown)
+                            setShowAccountDropdown(false)
+                        }}
                         className="flex items-center space-x-1 px-3 py-2 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
                     >
                         <img
@@ -75,7 +73,6 @@ const ConnectButton = ({label="连接钱包",showBalance, size="lg", className}:
                                         key={chain.name}
                                         onClick={() => { 
                                             switchChain(chain.id)
-                                            setShowChainDropdown(!showChainDropdown)
                                             setShowChainDropdown(false)
                                          }}
                                         className={`flex items-center space-x-2 w-full text-left px-4 py-2 text-sm ${chain.id === chainID ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'}`}
@@ -90,17 +87,20 @@ const ConnectButton = ({label="连接钱包",showBalance, size="lg", className}:
                 </div>: null
        
       }
-      <div className='ml-[10]'>{balance}</div>
+      <div className='ml-[10]'>{newBalance}</div>
       {/* 账户选择器 */}
     <div className="relative ml-auto">
         <button
-            onClick={() => setShowAccountDropdown(!showAccountDropdown)}
+            onClick={() => {
+                setShowAccountDropdown(!showAccountDropdown)
+                setShowChainDropdown(false)
+            }}
             className="flex items-center space-x-2 px-3 py-2 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
         >
-            <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+            <div className="h-6 w-6 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
                 {'OX'}
             </div>
-            <span className="text-sm font-medium hidden sm:inline">{ address ?? ''}</span>
+            <span className="text-sm font-medium hidden sm:inline">{ shortenEthAddress(address) ?? ''}</span>
             <svg
                 className={`w-4 h-4 transition-transform ${showAccountDropdown ? 'rotate-180' : ''}`}
                 fill="none"
@@ -128,7 +128,7 @@ const ConnectButton = ({label="连接钱包",showBalance, size="lg", className}:
                             className={`flex items-center justify-between w-full text-left px-4 py-3 text-sm ${acc === address ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'}`}
                         >
                             <div className="flex items-center space-x-2">
-                                <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                <div className="h-6 w-6 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
                                     {acc?.slice(0, 2).toUpperCase() || ''}
                                 </div>
                                 <span>{acc}</span>

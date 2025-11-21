@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState} from 'react'
+import {formatEther} from 'ethers'
 import type {WalletContextValue, WalletProviderProps, WalletState, Wallet} from '../types'
 import {WALLET_STATE, WATTET_EVENT_ACCOUNT_CHANGE, WATTET_EVENT_CHAIN_CHANGE} from '../const'
 import WalletModal from '../components/WalletModal'
@@ -6,18 +7,21 @@ const initWalletCtxValue = {
   address:'',
   chainID: '',
   walletId:'',
+  balance: '0',
   isConnecting: false,
   isConnected: false,
   chains: [],
   accounts:[],
   error: null,
   provider: null,
+  signer: null,
   connect:  async(walletID: string)=>{} ,
   disconnect: async()=>{},
   switchChain: async()=>{},
   changeAccountByUser: async(address:string)=>{},
   openModal:()=>{},
-  closeModal:()=>{}
+  closeModal:()=>{},
+  getBalance: async()=>({balance: '0', formatBalance: '0'})
 }
 const WalletContext = createContext<WalletContextValue>(initWalletCtxValue)
 
@@ -26,11 +30,13 @@ export const WalletProvider:React.FC<WalletProviderProps> = ({children,chains,wa
     address:'',
     chainID: '',
     walletId: '',
+    balance: '0',
     isConnecting: false,
     isConnected: false,
     chains:chains,
     error: null,
     provider: null,
+    signer: null,
     accounts: []
   })
   console.log('walletState',walletState)
@@ -54,8 +60,8 @@ export const WalletProvider:React.FC<WalletProviderProps> = ({children,chains,wa
         if(!wallet.connect){
           throw new Error(`${walletId} does not provide   connect method `)
         }
-        const {provider, chainID, address, accounts} = await wallet.connect();
-        setWalletState({...walletState, isConnecting: false, isConnected: true, chainID, address, provider, walletId, accounts})
+        const res = await wallet.connect();
+        setWalletState({...walletState, isConnecting: false, isConnected: true, walletId, ...res})
       },
       disconnect: async()=>{
         if(!walletState.walletId){
@@ -66,7 +72,7 @@ export const WalletProvider:React.FC<WalletProviderProps> = ({children,chains,wa
           throw new Error(`disconnect wallet id ${walletState.walletId} not found, please check`)
         }
         await wallet.disconnect()
-        setWalletState({...walletState,isConnected: false, isConnecting: false, provider: null, chainID: '', address: '', accounts:[], walletId:''})
+        setWalletState({...walletState,isConnected: false, isConnecting: false, provider: null, signer: null, chainID: '', address: '', accounts:[], walletId:''})
       },
       switchChain: async(chainID: string)=>{
         if(!walletState.walletId || !chainID){
@@ -87,6 +93,23 @@ export const WalletProvider:React.FC<WalletProviderProps> = ({children,chains,wa
       closeModal: ()=>{
         setModalOpen(false)
       },
+      getBalance: async()=>{
+        console.log('--getBalance',walletState.address,walletState.provider)
+        if(!walletState.provider || !walletState.address){
+          console.log('--getBalance 0')
+          return {
+            balance: '0',
+            formatBalance: '0'
+          }
+        }
+        console.log('--getBalance 1')
+        const bala = await walletState.provider.getBalance(walletState.address)
+        setWalletState({...walletState, balance: bala.toString()})
+        return {
+          balance: bala.toString(),
+          formatBalance: formatEther(bala)
+        }
+      }
     }
   },[walletState, walletMap])
   useEffect(()=>{
@@ -111,15 +134,16 @@ export const WalletProvider:React.FC<WalletProviderProps> = ({children,chains,wa
       const state: WalletState = JSON.parse(stateStr)
       if(autoConnect && state.walletId){
         const wallet = walletMap[state.walletId]
-        const {address, provider, chainID, accounts} = await wallet.connect()
-        setWalletState({...state, address, provider, chainID, accounts});
+        const res = await wallet.connect()
+        setWalletState({...state, ...res});
       }else {
         setWalletState(state);
       }
     }
     resumData()
   },[autoConnect,walletMap])
- 
+  
+  // 监听插件钱包账号切换网络切换事件
   useEffect(()=>{
     const handleAccountChange =  (e:any) => {
       console.log('handleAccountChange',e)
@@ -130,10 +154,10 @@ export const WalletProvider:React.FC<WalletProviderProps> = ({children,chains,wa
     }
     window.addEventListener(WATTET_EVENT_ACCOUNT_CHANGE,handleAccountChange);
     window.addEventListener(WATTET_EVENT_CHAIN_CHANGE, handleChainChange);
-    walletState.provider?.on("network", (newNetwork:any, oldNetwork: any) => {
-        console.log("Network changed:", oldNetwork, "=>", newNetwork);
+    // walletState.provider?.on("network", (newNetwork:any, oldNetwork: any) => {
+    //     console.log("Network changed:", oldNetwork, "=>", newNetwork);
 
-    })
+    // })
 
     return ()=>{
       window.removeEventListener(WATTET_EVENT_ACCOUNT_CHANGE,handleAccountChange)

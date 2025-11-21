@@ -2,6 +2,7 @@ import type {Chain, Wallet} from './_wallet-sdk/types'
 import metamask from './_wallet-sdk/connectors/metamask'
 import okxwallet from './_wallet-sdk/connectors/okxWallet';
 import coinbase from './_wallet-sdk/connectors/coinbase'
+import phantom from './_wallet-sdk/connectors/phantom'
 export const chains:Chain[] =[{
   id: '11155111',
   name: 'Sepolia',
@@ -25,5 +26,5 @@ export const chains:Chain[] =[{
   }
 }]
 export const CONTRACT_ADDR = "0x53dcd07b90b6326dc0eaae84963b3100b0fe7963";
-export const wallets:Wallet[] = [metamask, okxwallet, coinbase]
+export const wallets:Wallet[] = [metamask, okxwallet, coinbase, phantom]
 

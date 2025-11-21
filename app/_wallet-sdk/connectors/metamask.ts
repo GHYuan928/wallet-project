@@ -5,19 +5,17 @@ import {WATTET_EVENT_ACCOUNT_CHANGE, WATTET_EVENT_CHAIN_CHANGE} from '../const'
 const genPeovider = async()=>{
   const ethereum = window.ethereum;
   const provider = new ethers.BrowserProvider(ethereum);
+  const signer = await provider.getSigner();
   const { chainId:newChainID }  = await provider.getNetwork();
-  return {provider,chainID: newChainID.toString()}
+  return {provider, signer,chainID: newChainID.toString()}
 }
 const connectMetamask = async ()=>{
   const ethereum = window.ethereum;
   const accounts = await ethereum.request({ method: "eth_requestAccounts" });
   if (!accounts || accounts.length === 0) throw new Error("No account found");
-  const provider = new ethers.BrowserProvider(ethereum);
-  const signer = await provider.getSigner();
+  const {provider, signer,chainID} = await genPeovider();
   const address = await signer.getAddress();
-  const { chainId }  = await provider.getNetwork();
-  console.log('accounts',accounts)
-  return {provider, chainID: chainId.toString(),address, accounts}
+  return {provider, chainID ,address, accounts, signer}
 }
 const disconnectMetamask = async()=>{
   await window.ethereum.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] });
