@@ -1,7 +1,7 @@
 "use client";
 import {ConnetButton} from './_wallet-sdk'
 import { motion } from "motion/react";
-import {ethers, parseEther} from 'ethers'
+import { parseEther} from 'ethers'
 import { FiTrendingUp, FiZap, FiArrowDown } from 'react-icons/fi';
 import Card from '@/components/Card';
 import Input from '@/components/Input';

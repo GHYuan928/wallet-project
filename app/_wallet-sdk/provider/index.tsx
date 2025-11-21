@@ -94,15 +94,12 @@ export const WalletProvider:React.FC<WalletProviderProps> = ({children,chains,wa
         setModalOpen(false)
       },
       getBalance: async()=>{
-        console.log('--getBalance',walletState.address,walletState.provider)
         if(!walletState.provider || !walletState.address){
-          console.log('--getBalance 0')
           return {
             balance: '0',
             formatBalance: '0'
           }
         }
-        console.log('--getBalance 1')
         const bala = await walletState.provider.getBalance(walletState.address)
         setWalletState({...walletState, balance: bala.toString()})
         return {
