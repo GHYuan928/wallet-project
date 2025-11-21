@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { motion } from "motion/react";
 import { FiArrowUp } from 'react-icons/fi';
-import { formatUnits } from 'ethers'
+import { formatUnits, parseUnits, parseEther } from 'ethers'
 import StatCard from '@/components/StatCard';
 import Input from '@/components/Input';
 import { useAccount } from '../_wallet-sdk/hooks';
@@ -33,9 +33,8 @@ const page = () => {
   const [userData, setUserData] = useState<UserStakeData>(initilaData)
   const [loading, setLoading] = useState<boolean>(false)
   const contact = useContract(CONTRACT_TOKEN, stakeAbi)
-  const handleUnstake = ()=> {
-    contact?.unstake()
-  }
+  
+  // 查询用户数据
   const getUserData = async()=>{
     const stakedAmount = await contact?.stakingBalance(0, address)
     const {requestAmount , pendingWithdrawAmount} = await contact?.withdrawAmount(0, address);
@@ -44,6 +43,10 @@ const page = () => {
       withdrawable: formatUnits(requestAmount),
       withdrawPending: formatUnits(pendingWithdrawAmount)
     })
+  }
+  // 解质押
+  const handleUnstake = ()=> {
+    contact?.unstake(0,)
   }
   useEffect(()=>{
     if(contact && address){
