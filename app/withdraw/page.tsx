@@ -1,16 +1,17 @@
 "use client"
 import React, { useCallback, useEffect, useState } from 'react'
 import { motion } from "motion/react";
-import { FiArrowUp } from 'react-icons/fi';
+import { FiArrowUp , FiClock, FiInfo} from 'react-icons/fi';
 import { formatUnits, parseUnits, parseEther } from 'ethers'
 import StatCard from '@/components/StatCard';
 import Input from '@/components/Input';
 import { useAccount } from '../_wallet-sdk/hooks';
 import { ConnetButton } from '../_wallet-sdk';
-import {useContract} from '../_wallet-sdk/hooks';
+import {useContract, useBalance} from '../_wallet-sdk/hooks';
 import {CONTRACT_TOKEN} from '@/const/index'
 import {stakeAbi} from '@/const/abi'
 import Button from '@/components/Button';
+import { toast } from 'react-toastify';
 
 /**
  * staked 已质押金额
@@ -28,10 +29,13 @@ const initilaData :UserStakeData = {
   withdrawable: '0'
 }
 const page = () => {
-  const { address, isConnected} = useAccount()
+  const {address, isConnected} = useAccount()
   const [amount, setAmount]=useState<string>('')
   const [userData, setUserData] = useState<UserStakeData>(initilaData)
   const [loading, setLoading] = useState<boolean>(false)
+  const [withdrawLoading, setWithdrawLoading] = useState<boolean>(false)
+  const [reloadBalance, setReloadBalance] = useState('')
+  useBalance(reloadBalance)
   const contact = useContract(CONTRACT_TOKEN, stakeAbi)
   
   // 查询用户数据
@@ -45,14 +49,48 @@ const page = () => {
     })
   }
   // 解质押
-  const handleUnstake = ()=> {
-    contact?.unstake(0,)
+  const handleUnstake =async ()=> {
+    setLoading(true)
+    try {
+      const tx = await contact?.unstake(0,parseEther(amount))
+      const recepit = await tx.wait();
+      setLoading(false)
+      if(recepit.status === 1){
+        toast.success('unstake success')
+        getUserData()
+      }else{
+        toast.error('unstake error')
+      }
+      
+    } catch (error) {
+      toast.error('unstake error')
+      setLoading(false)
+    }
   }
   useEffect(()=>{
     if(contact && address){
       getUserData();
     }
   },[contact, address])
+  const handleWithdraw = async()=>{
+    setWithdrawLoading(true)
+    try {
+      const tx = await contact?.withdraw(0);
+      const recepit = await tx.wait();
+      console.log('recepit',recepit)
+      setWithdrawLoading(false)
+      if(recepit.status === 1){
+        toast.success('Withdraw success')
+        getUserData()
+      }else{
+        toast.error('Withdraw error')
+      }
+    } catch (error) {
+      toast.error('Withdraw error')
+      setWithdrawLoading(false)
+    }
+  }
+
   return (
     <div className='w-full max-w-4xl mx-auto'>
       <motion.div 
@@ -72,12 +110,12 @@ const page = () => {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="card"
       >
-        <div className='grid grid-cols-3 gap-6 mb-8'>
+        <div className='grid grid-cols-3 gap-6 mb-4'>
           <StatCard label="Staked Amount" value={`${parseFloat(userData.staked).toFixed(4)} ETH`} />
           <StatCard label="Available to Withdraw" value={`${parseFloat(userData.withdrawable).toFixed(4)} ETH`} />
           <StatCard label="Pending Withdraw" value={`${parseFloat(userData.withdrawPending).toFixed(4)} ETH`} />
         </div>
-        <div className='space-y-6'>
+        <div className='space-y-2'>
           <h2 className='text-xl font-semibold text-white'>Unstake</h2>
           <div className='space-y-2'>
             <label className='block text-sm font-medium text-gray-700'>
@@ -93,29 +131,60 @@ const page = () => {
             />
           </div>
         </div>
-        <div className='pt-4'>
-              {
-                !isConnected ? (
-                  <div className='flex justify-center'>
-                    <div className=' relative'>
-                      <ConnetButton />
-                    </div>
-                  </div>
-                ):(
-                  <Button
-                    onClick={handleUnstake}
-                    disabled={loading || !amount}
-                    loading={loading}
-                    fullWidth
-                    className="py-3 text-lg sm:text-xl"
+        <div className='pt-2'>
+          {
+            !isConnected ? (
+              <div className='flex justify-center'>
+                <div className=' relative'>
+                  <ConnetButton />
+                </div>
+              </div>
+            ):(
+              <Button
+                onClick={handleUnstake}
+                disabled={loading || !amount}
+                loading={loading}
+                fullWidth
+                className="py-3 text-lg sm:text-xl"
 
-                >
-                  <FiArrowUp className="w-6 h-6 sm:w-7 sm:h-7" />
-                  <span>Unstake ETH</span>
-                </Button>
-                )
-              }
+            >
+              <FiArrowUp className="w-6 h-6 sm:w-7 sm:h-7" />
+              <span>Unstake ETH</span>
+            </Button>
+            )
+          }
+        </div>
+        <div className='mt-12 space-y-3'>
+          <h2 className='text-xl font-semibold text-white'>Withdraw</h2>
+          <div className='bg-blue-50 rounded-lg p-4'>
+            <div className='flex items-center justify-between'>
+              <div>
+                <div className='text-sm text-gray-600'>Ready to Withdraw</div>
+                <div className="text-2xl font-semibold text-primary-600">
+                  {parseFloat(userData.withdrawPending).toFixed(4)} ETH
+                </div>
+              </div>
+              <div className="flex items-center text-sm text-gray-500">
+                <FiClock className="mr-1" />
+                <span>20 min cooldown</span>
+              </div>
             </div>
+          </div>
+          <div className="flex items-center text-sm text-gray-500">
+            <FiInfo className="mr-1" />
+            <span>After unstaking, you need to wait 20 minutes to withdraw.</span>
+          </div>
+          <Button
+            onClick={handleWithdraw}
+            disabled={withdrawLoading|| Number(userData.withdrawable) === 0}
+            loading={withdrawLoading}
+            fullWidth
+            className="py-3 text-lg sm:text-xl"
+          >
+            <FiArrowUp className="w-6 h-6 sm:w-7 sm:h-7" />
+            <span>Withdraw ETH</span>
+          </Button>
+        </div>
       </motion.div>
 
       

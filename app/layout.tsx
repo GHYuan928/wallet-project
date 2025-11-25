@@ -35,7 +35,7 @@ export default function RootLayout({
               <div className="absolute inset-0 tech-grid" />
               <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-primary-500/10 via-transparent to-transparent" />
             </div>
-            <div className=" relative flex flex-col grow">
+            <div className=" relative flex flex-col grow h-screen overflow-scroll">
               <ToastContainer
                 position="top-right"
                 autoClose={3000}
@@ -53,7 +53,6 @@ export default function RootLayout({
               <Header />
               {children}
             </div>
-            
           </div>
         </Provider>
       </body>

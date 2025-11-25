@@ -2,7 +2,7 @@
 import {ConnetButton} from './_wallet-sdk'
 import { motion } from "motion/react";
 import { parseEther} from 'ethers'
-import { FiTrendingUp, FiZap, FiArrowDown } from 'react-icons/fi';
+import { FiTrendingUp, FiZap, FiArrowDown, FiGift , FiInfo} from 'react-icons/fi';
 import Card from '@/components/Card';
 import Input from '@/components/Input';
 import { toast } from "react-toastify";
@@ -11,6 +11,7 @@ import Button from '@/components/Button';
 import {useContract, useAccount, useBalance} from '@/app/_wallet-sdk/hooks'
 import {CONTRACT_TOKEN} from '@/const/index'
 import {stakeAbi} from '@/const/abi'
+import useReward from './_hooks/useReward';
 export default function Home() {
   const {address, isConnected} = useAccount();
   const contract = useContract(CONTRACT_TOKEN, stakeAbi)
@@ -18,7 +19,9 @@ export default function Home() {
   const [reloadBalance, setReloadBalance] = useState('')
   const balance = useBalance(reloadBalance)
   const [loading, setLoading] = useState(false);
-  
+  const {rewardsData, canClaim, poolData} = useReward()
+  const [claimLoading, setClaimLoading] = useState(false);
+
   const handleStake = async ()=>{
     setLoading(true)
     try {
@@ -43,6 +46,15 @@ export default function Home() {
       console.log('error',error)
       setLoading(false)
     }
+
+  }
+
+  const handleClaim = async () => {
+    setClaimLoading(true);
+    const tx = await contract!.claim(0);
+    const res  = await tx.wait();
+    console.log('res',res)
+    setClaimLoading(false);
 
   }
 
@@ -80,7 +92,7 @@ export default function Home() {
                <div className="flex flex-col justify-center flex-1 min-w-0 items-center sm:items-start">
                 <span className="text-gray-400 text-base sm:text-lg mb-1">Staked Amount</span>
                 <span className="text-3xl sm:text-5xl font-bold bg-linear-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent leading-tight break-all">
-                  {0} ETH
+                  {poolData.stTokenAmount} ETH
                 </span>
               </div>
             </div>
@@ -119,6 +131,43 @@ export default function Home() {
                 </Button>
                 )
               }
+            </div>
+          </div>
+        </Card>
+
+        <Card className="min-h-[420px] p-4 bg-linear-to-br from-gray-800/80 to-gray-900/80 shadow-2xl border-blue-500/20 border-[1.5px] rounded-2xl sm:rounded-3xl">
+          <div className="space-y-8 sm:space-y-12">
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 p-4 sm:p-8 bg-gray-800/70 rounded-xl sm:rounded-2xl border border-gray-700/50 group-hover:border-primary-500/50 transition-colors duration-300 shadow-lg">
+              <div className="shrink-0 flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 bg-green-500/10 rounded-full">
+                <FiGift className="w-8 h-8 sm:w-10 sm:h-10 text-green-400" />
+              </div>
+              <div className="flex flex-col justify-center flex-1 min-w-0 items-center sm:items-start">
+                <span className="text-gray-400 text-base sm:text-lg mb-1">Pending Rewards</span>
+                <span className="text-3xl sm:text-5xl font-bold bg-linear-to-r from-green-400 to-green-600 bg-clip-text text-transparent leading-tight break-all">
+                  {parseFloat(rewardsData.pendingReward).toFixed(4)} MetaNode
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-4 sm:pt-8">
+              {!isConnected ? (
+                <div className="flex justify-center">
+                  <div className="glow">
+                    <ConnetButton />
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  onClick={handleClaim}
+                  disabled={claimLoading || !canClaim}
+                  loading={claimLoading}
+                  fullWidth
+                  className="py-3 sm:py-5 text-lg sm:text-xl bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                >
+                  <FiGift className="w-6 h-6 sm:w-7 sm:h-7" />
+                  <span>Claim Rewards</span>
+                </Button>
+              )}
             </div>
           </div>
         </Card>
