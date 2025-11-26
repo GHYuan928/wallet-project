@@ -71,6 +71,8 @@ export const WalletProvider:React.FC<WalletProviderProps> = ({children,chains,wa
         if(!wallet){
           throw new Error(`disconnect wallet id ${walletState.walletId} not found, please check`)
         }
+        // 先移除账号监听
+        wallet.removeEventListener()
         await wallet.disconnect()
         setWalletState({...walletState,isConnected: false, isConnecting: false, provider: null, signer: null, chainID: '', address: '', accounts:[], walletId:''})
       },

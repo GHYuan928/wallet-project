@@ -5,18 +5,18 @@ import {WATTET_EVENT_ACCOUNT_CHANGE, WATTET_EVENT_CHAIN_CHANGE} from '../const'
 const genPeovider = async()=>{
   const okx = (window as any).okxwallet;
   const provider = new ethers.BrowserProvider(okx);
+  const signer = await provider.getSigner();
   const { chainId:newChainID }  = await provider.getNetwork();
-  return {provider,chainID: newChainID.toString()}
+  return {provider,chainID: newChainID.toString(), signer}
 }
 const connect= async ()=>{
   const okx = (window as any).okxwallet;
   const accounts = await okx.request({ method: "eth_requestAccounts" });
   if (!accounts || accounts.length === 0) throw new Error("No account found");
-  const {provider,chainID } = await genPeovider();
-  const signer = await provider.getSigner();
+  const {provider,chainID ,signer} = await genPeovider();
   const address = await signer.getAddress();
   console.log('accounts',accounts)
-  return {provider, chainID:chainID,address, accounts}
+  return {provider, chainID:chainID,address, accounts, signer}
 }
 const disconnect = async()=>{
   // okx 不支持

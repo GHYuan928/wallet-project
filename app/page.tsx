@@ -8,6 +8,7 @@ import Input from '@/components/Input';
 import { toast } from "react-toastify";
 import { useState } from 'react';
 import Button from '@/components/Button';
+import UMIButton from '@mui/material/Button'
 import {useContract, useAccount, useBalance} from '@/app/_wallet-sdk/hooks'
 import {CONTRACT_TOKEN} from '@/const/index'
 import {stakeAbi} from '@/const/abi'
@@ -19,7 +20,7 @@ export default function Home() {
   const [reloadBalance, setReloadBalance] = useState('')
   const balance = useBalance(reloadBalance)
   const [loading, setLoading] = useState(false);
-  const {rewardsData, canClaim, poolData} = useReward()
+  const {rewardsData, canClaim, poolData, addMetaNodeToWallet,refresh} = useReward()
   const [claimLoading, setClaimLoading] = useState(false);
 
   const handleStake = async ()=>{
@@ -49,13 +50,25 @@ export default function Home() {
 
   }
 
-  const handleClaim = async () => {
-    setClaimLoading(true);
-    const tx = await contract!.claim(0);
-    const res  = await tx.wait();
-    console.log('res',res)
-    setClaimLoading(false);
 
+  const handleClaim = async () => {
+    try {
+      setClaimLoading(true);
+      const tx = await contract!.claim(0);
+      const res  = await tx.wait();
+      console.log('res',res)
+      if (res.status === 1) {
+        toast.success('Claim successful!');
+        setClaimLoading(false);
+        refresh(); // 刷新奖励数据
+        return;
+      }
+      toast.error('Claim failed!');
+    }  catch (error) {
+      setClaimLoading(false);
+      toast.error('Transaction failed. Please try again.');
+      console.log(error, 'claim-error');
+    }
   }
 
   return (
@@ -78,7 +91,7 @@ export default function Home() {
         <h1 className="text-4xl font-bold bg-linear-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent mb-2">
           MetaNode Stake
         </h1>
-        <p className="text-gray-400 text-xl">
+        <p className="text-primary text-xl">
           Stake ETH to earn tokens
         </p>
       </motion.div>
@@ -148,7 +161,10 @@ export default function Home() {
                 </span>
               </div>
             </div>
-
+            <div>
+              <span className='text-primary'>{`累计获取奖励:${parseFloat(rewardsData.finishedMetaNode).toFixed(4)} metanode`}</span>
+              <UMIButton onClick={addMetaNodeToWallet}>添加代币到metamask</UMIButton>
+            </div>
             <div className="pt-4 sm:pt-8">
               {!isConnected ? (
                 <div className="flex justify-center">

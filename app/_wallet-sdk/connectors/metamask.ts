@@ -18,6 +18,8 @@ const connectMetamask = async ()=>{
   return {provider, chainID ,address, accounts, signer}
 }
 const disconnectMetamask = async()=>{
+    console.log('log: wallet_revokePermissions')
+
   await window.ethereum.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] });
 }
 const switchChainMetamask = async(chainId: string)=>{

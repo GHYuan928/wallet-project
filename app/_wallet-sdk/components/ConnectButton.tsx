@@ -97,8 +97,8 @@ const ConnectButton = ({label="连接钱包",showBalance, size="lg", className}:
             }}
             className="flex items-center space-x-2 px-3 py-2 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
         >
-            <div className="h-6 w-6 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                {'OX'}
+            <div className="h-6 w-6 rounded-full bg-linear-to-br from-green-500 to-pink-600 flex items-center justify-center text-white text-xs font-bold">
+                {'0X'}
             </div>
             <span className="text-sm font-medium hidden sm:inline">{ shortenEthAddress(address) ?? ''}</span>
             <svg

@@ -4,10 +4,12 @@ import {stakeAbi} from '@/const/abi'
 import { useCallback, useEffect, useState } from "react";
 import { formatUnits } from 'ethers';
 
+
 export type IRewardsData = {
   /** 用户在当前资金池，当前可领取的 MetaNode 数量 */
   pendingReward: string; 
   stakedAmount: string;
+  finishedMetaNode: string
   lastUpdate: number;
 };
 export type IPoolData = {
@@ -28,6 +30,7 @@ const useReward = ()=>{
   const [rewardsData, setRewardsData] = useState<IRewardsData>({
     pendingReward: '0',
     stakedAmount: '0',
+    finishedMetaNode: '0',
     lastUpdate: 0
   });
   const [loading, setLoading] = useState(false);
@@ -46,19 +49,23 @@ const useReward = ()=>{
     try {
       setLoading(true)
       const user = await contract.user(0, address)
+      const pen = await contract.pendingMetaNode(0,address);
+      console.log(`pend: ${pen}`)
       console.log(`user.stAmount:${user.stAmount} finishedMetaNode:${user.finishedMetaNode} pendingMetaNode:${user.pendingMetaNode}`)
 
       const stakedAmount = await contract.stakingBalance(0, address)
       console.log('stakedAmount',stakedAmount)
       setRewardsData({
-        pendingReward: formatUnits(user.pendingReward || BigInt(0), 18),
+        pendingReward: formatUnits(pen || BigInt(0), 18),
         stakedAmount: formatUnits(BigInt(stakedAmount)|| BigInt(0), 18),
+        finishedMetaNode: formatUnits(BigInt(user.finishedMetaNode)|| BigInt(0), 18),
         lastUpdate: Date.now()
       });
     } catch (error) {
       setRewardsData({
         pendingReward: '0',
         stakedAmount: '0',
+        finishedMetaNode: '0',
         lastUpdate: Date.now()
       });
     }finally {
@@ -87,7 +94,7 @@ const useReward = ()=>{
 
     try {
       const address = await contract.MetaNode();
-      console.log('fetchMetaNodeAddress',address)
+      console.log('代币地址：',address)
       setMetaNodeAddress(address as string);
     } catch (error) {
       console.error('Failed to fetch MetaNode address:', error);
@@ -100,11 +107,69 @@ const useReward = ()=>{
       fetchMetaNodeAddress()
     }
   },[isConnected, address])
+
+  useEffect(()=>{
+    if(!isConnected || !address){
+      return;
+    }
+    const interval = setInterval(()=>{
+      fetchRewardsData()
+    },60000)
+    return ()=>clearInterval(interval)
+  },[isConnected, address, fetchRewardsData])
+  const addMetaNodeToMetaMask =async ({address,symbol,decimals,image}:
+    { 
+      address: string,
+      symbol: string,
+      decimals: number,
+      image?: string}
+    )=>{
+    if (typeof window === 'undefined' || !window.ethereum) {
+      throw new Error('MetaMask未安装或未连接');
+    }
+     const wasAdded = await window.ethereum.request({
+      method: 'wallet_watchAsset',
+      params: {
+        type: 'ERC20',
+        options: {
+          address,
+          symbol,
+          decimals,
+          image
+        },
+      },
+    });
+    if (wasAdded) {
+      console.log(`${symbol} 添加成功!`);
+      return true;
+    } else {
+      console.log('用户取消了添加');
+      return false;
+    }
+  }
+  const addMetaNodeToWallet = useCallback(async()=>{
+    if(!metaNodeAddress){
+      return ;
+    }
+    try {
+      return await addMetaNodeToMetaMask({
+      address: metaNodeAddress,
+      symbol: 'MetaNode',
+      decimals: 18,
+      image: '' // 可以添加MetaNode代币的logo URL
+    });
+    } catch (error) {
+      console.error('添加MetaNode到钱包失败:', error);
+      return false;
+    }
+  },[metaNodeAddress])
   return {
     rewardsData,
     loading,
     poolData,
     metaNodeAddress,
+    refresh: fetchRewardsData,
+    addMetaNodeToWallet,
     canClaim: parseFloat(rewardsData.pendingReward) > 0
   };
 }
