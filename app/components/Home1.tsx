@@ -1,9 +1,9 @@
 
-import { WalletProvider } from "../_wallet/provider";
-import ConnectButton from "../_wallet/components/ConnectButton";
-import metamask from "../_wallet/connectors/metamask";
-import okxWallet from "../_wallet/connectors/okxWallet";
-import coinbaseWallet from "../_wallet/connectors/coinbase";
+import { WalletProvider } from "../_wallet_废弃/provider";
+import ConnectButton from "../_wallet_废弃/components/ConnectButton";
+import metamask from "../_wallet_废弃/connectors/metamask";
+import okxWallet from "../_wallet_废弃/connectors/okxWallet";
+import coinbaseWallet from "../_wallet_废弃/connectors/coinbase";
 const ALCHEMY_MAINNET_URL = 'https://eth-mainnet.g.alchemy.com/v2/F0di7R5tgFYa1JkaCS_-g';
 const ALCHEMY_SEPOLIA_URL = "https://eth-sepolia.g.alchemy.com/v2/F0di7R5tgFYa1JkaCS_-g"; 
 const chains = [

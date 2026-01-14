@@ -1,0 +1,32 @@
+name: deploy # 名称
+
+on: # 触发条件
+  push: # push 才触发
+    branches: # 分支
+      - main 
+
+jobs: # jobs 可配置多个
+  build:  # job名称，这里我们叫他 build
+    runs-on: ubuntu-latest # 运行环境
+    steps: # steps 步骤
+      - name: Checkout code【checkout代码】 # 步骤名称
+        uses: actions/checkout@v2 # 使用的 github action
+
+      - name: Setup Node.js【设置node环境】  # 设置 Node.js 环境
+        uses: actions/setup-node@v2 # 使用的 action
+        with:
+          node-version: '20' # 指定 Node.js 版本
+
+      - name: Install dependencies # 安装依赖
+        run: npm install # 运行命令
+
+      - name: Build project # 构建项目
+        run: npm run build # 运行命令
+
+      # - name: Deploy to Vercel # 部署到 Vercel
+      #   uses: amondnet/vercel-action@v20 # 使用的 action
+      #   with:
+      #     vercel-token: ${{ secrets.VERCEL_TOKEN }} # Vercel token，需在仓库设置中添加 secrets
+      #     vercel-args: '--prod' # 部署参数，这里是部署到生产环境
+      #     working-directory: './' # 工作目录，根据需要修改
+
