@@ -3,7 +3,7 @@ name: deploy # 名称
 on: # 触发条件
   push: # push 才触发
     branches: # 分支
-      - main 
+      - stake
 
 jobs: # jobs 可配置多个
   build:  # job名称，这里我们叫他 build
